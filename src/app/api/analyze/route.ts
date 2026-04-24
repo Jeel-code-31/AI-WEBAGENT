@@ -74,13 +74,31 @@ export async function GET(req: NextRequest) {
       xFrameOptions: response.headers.get("x-frame-options") || "Not set",
     };
 
-    // 3. Design System Detection (Elite)
+    // 3. Design System & Tech Detection (Advanced)
     const fonts = new Set<string>();
     const colors = new Set<string>();
     const techStack = new Set<string>();
 
-    const allStyles = $("style").text() + $('[style]').map((_, el) => $(el).attr('style')).get().join(" ");
+    let allStyles = $("style").text() + $('[style]').map((_, el) => $(el).attr('style')).get().join(" ");
     const scripts = $("script").map((_, el) => $(el).attr('src') || $(el).text()).get().join(" ");
+
+    // Fetch external stylesheets (max 3 for performance)
+    const externalStylesheets = $('link[rel="stylesheet"]').map((_, el) => $(el).attr('href')).get().slice(0, 3);
+    for (const href of externalStylesheets) {
+      try {
+        let fullUrl = href;
+        if (!href.startsWith("http")) {
+          const baseUrl = new URL(formattedUrl).origin;
+          fullUrl = new URL(href, baseUrl).href;
+        }
+        const cssRes = await fetch(fullUrl, { signal: AbortSignal.timeout(5000) });
+        if (cssRes.ok) {
+          allStyles += await cssRes.text();
+        }
+      } catch (e) {
+        // Skip if failed
+      }
+    }
 
     // Font Detection
     const fontRegex = /font-family:\s*([^;!]+)/gi;
@@ -100,37 +118,117 @@ export async function GET(req: NextRequest) {
     const rgbMatches = allStyles.match(rgbRegex) || [];
     
     [...hexMatches, ...rgbMatches].forEach(c => {
-      // Filter out very light/dark or redundant colors
       colors.add(c.toLowerCase());
     });
 
+
     // 4. Technology Fingerprinting
-    const fingerprints: { [key: string]: string | RegExp } = {
-      "Next.js": /next-head|next-js|_next/i,
-      "React": /react-root|_react|React\.createElement/i,
-      "Vue.js": /vue\.js|v-bind|v-if|data-v-/i,
-      "Angular": /ng-version|ng-app|ng-binding/i,
-      "Tailwind CSS": /tailwind|tw-|aspect-h-/i,
-      "Bootstrap": /bootstrap|bs-|navbar-expand/i,
-      "WordPress": /wp-content|wp-includes|wordpress/i,
-      "Shopify": /shopify|cdn\.shopify\.com/i,
-      "Webflow": /webflow\.com|w-custom-css/i,
-      "Wix": /wix\.com|wix-style/i,
+    // 4. Technology Fingerprinting (Elite & Accurate)
+    const fingerprints: { [key: string]: RegExp } = {
+      // Frameworks
+      "Next.js": /next-head|next-js|_next|__NEXT_DATA__/i,
+      "React": /react-root|_react|React\.createElement|data-reactroot/i,
+      "Vue.js": /vue\.js|v-bind|v-if|data-v-|__vue__/i,
+      "Nuxt.js": /__NUXT__|nuxt-link/i,
+      "Angular": /ng-version|ng-app|ng-binding|_ngcontent/i,
+      "Svelte": /svelte-|__svelte/i,
+      "Remix": /__remix_manifest|remix-run/i,
+      "Gatsby": /gatsby-image|gatsby-link|__GATSBY/i,
+      "Astro": /astro-[\w\d]+|data-astro-/i,
+      "Qwik": /q-container|q-base|q-id/i,
+      "Preact": /preact/i,
+      "SolidJS": /__solid/i,
+      "Alpine.js": /x-data|x-init|x-show|alpine\.js/i,
+      "Ember": /ember-application|ember-view/i,
+      "Backbone.js": /backbone\.js/i,
+      
+      // Styling
+      "Tailwind CSS": /tailwind|tw-[\w-]+|aspect-h-|bg-opacity-|text-opacity-|ring-offset-/i,
+      "Bootstrap": /bootstrap\.min\.css|bootstrap\.bundle\.min\.js|bs-[\w-]+|navbar-expand-[\w]+|container-fluid|col-(xs|sm|md|lg|xl)-/i,
+      "Bulma": /is-primary|is-flex|is-grid|has-text-/i,
+      "Foundation": /foundation-mq|foundation-settings/i,
+      "UIkit": /uk-navbar|uk-container|uk-grid/i,
+      "Chakra UI": /chakra-|css-[\w\d]+-[\w\d]+/i,
+      "MUI (Material UI)": /MuiButton-|MuiTypography-|MuiBox-/i,
+      "Ant Design": /ant-btn|ant-layout|ant-menu/i,
+      "Styled Components": /sc-[\w\d]+|data-styled/i,
+      
+      // Platforms & CMS
+      "WordPress": /wp-content|wp-includes|wordpress|wp-json/i,
+      "Shopify": /shopify|cdn\.shopify\.com|shopify-section/i,
+      "Webflow": /webflow\.com|w-custom-css|w-node-|w-block/i,
+      "Wix": /wix\.com|wix-style|wix-image/i,
+      "Ghost": /ghost-org|ghost-sdk/i,
+      "Docusaurus": /docusaurus|infima/i,
+      "Squarespace": /squarespace|sqs-/i,
+      "HubSpot": /hubspot\.com|hs-script-loader/i,
+      "Sanity": /cdn\.sanity\.io/i,
+      "Contentful": /ctfassets\.net/i,
+      "Strapi": /strapi/i,
+      
+      // Static Site Generators
+      "Hugo": /hugo/i,
+      "Jekyll": /jekyll/i,
+      "Eleventy": /11ty/i,
+      
+      // Animation & Interaction
       "Framer Motion": /framer-motion/i,
-      "GSAP": /gsap|TweenMax|TimelineLite/i,
+      "GSAP": /gsap|TweenMax|TimelineLite|ScrollTrigger/i,
+      "Three.js": /three\.js|three\.min\.js/i,
+      "Lottie": /lottie-player|dotLottie/i,
+      
+      // Infrastructure & Utils
       "Vercel": /vercel/i,
       "Cloudflare": /cloudflare/i,
+      "Netlify": /netlify/i,
       "Stripe": /stripe\.com|StripeCheckout/i,
       "jQuery": /jquery|cdn\.jsdelivr\.net\/npm\/jquery/i,
+      "Google Analytics": /google-analytics\.com|gtag/i,
+      "Intercom": /intercomcdn\.com|intercom-messenger/i,
     };
 
+
+    // Check Meta Generator tag
+    const generator = $('meta[name="generator"]').attr("content");
+    if (generator) {
+      if (generator.toLowerCase().includes("next.js")) techStack.add("Next.js");
+      if (generator.toLowerCase().includes("wordpress")) techStack.add("WordPress");
+      if (generator.toLowerCase().includes("webflow")) techStack.add("Webflow");
+      if (generator.toLowerCase().includes("ghost")) techStack.add("Ghost");
+      if (generator.toLowerCase().includes("docusaurus")) techStack.add("Docusaurus");
+      if (generator.toLowerCase().includes("wix")) techStack.add("Wix");
+    }
+
     Object.entries(fingerprints).forEach(([name, pattern]) => {
-      if (typeof pattern === "string") {
-        if (html.includes(pattern) || scripts.includes(pattern)) techStack.add(name);
-      } else if (pattern.test(html) || pattern.test(scripts) || pattern.test(allStyles)) {
+      if (pattern.test(html) || pattern.test(scripts) || pattern.test(allStyles)) {
         techStack.add(name);
       }
     });
+
+    // Smart Filtering & Header Checks
+    const poweredBy = response.headers.get("x-powered-by");
+    if (poweredBy) {
+      if (/next\.js/i.test(poweredBy)) techStack.add("Next.js");
+      if (/express/i.test(poweredBy)) techStack.add("Express");
+      if (/php/i.test(poweredBy)) techStack.add("PHP");
+      if (/asp\.net/i.test(poweredBy)) techStack.add("ASP.NET");
+    }
+
+    const server = response.headers.get("server");
+    if (server) {
+      if (/cloudflare/i.test(server)) techStack.add("Cloudflare");
+      if (/vercel/i.test(server)) techStack.add("Vercel");
+      if (/netlify/i.test(server)) techStack.add("Netlify");
+      if (/nginx/i.test(server)) techStack.add("Nginx");
+      if (/apache/i.test(server)) techStack.add("Apache");
+    }
+
+    // Additional logic for specific libraries
+    if (html.includes("data-framer-portal")) techStack.add("Framer");
+    if (html.includes("spline-viewer")) techStack.add("Spline");
+    if (html.includes("canvas") && html.includes("webgl")) techStack.add("WebGL");
+
+    const finalTechStack = Array.from(techStack).sort();
 
     // 5. Accessibility
     const images = $("img");
@@ -157,7 +255,7 @@ export async function GET(req: NextRequest) {
         fonts: Array.from(fonts).slice(0, 5),
         colors: Array.from(colors).slice(0, 8),
       },
-      techStack: Array.from(techStack),
+      techStack: finalTechStack,
       accessibility: {
         score: accessibilityScore,
         totalImages: images.length,
@@ -168,7 +266,12 @@ export async function GET(req: NextRequest) {
         scripts: scriptCount,
         imageCount: images.length,
         loadTimeEstimate: `${loadTimeEstimate}s`,
-        score: Math.max(0, 100 - (pageSizeKb / 50) - (scriptCount * 2))
+        score: Math.max(10, Math.min(100, Math.round(
+          Math.max(0, 100 - (pageSizeKb / 200)) * 0.4 + 
+          Math.max(0, 100 - (scriptCount * 1.2)) * 0.3 + 
+          (accessibilityScore) * 0.2 +
+          (isHttps ? 10 : 0)
+        )))
       },
       responsive: !!$('meta[name="viewport"]').attr("content")
     });
