@@ -29,7 +29,6 @@ export function Navbar() {
           </span>
         </Link>
 
-        {/* Desktop Navigation */}
         <div className="hidden md:flex items-center gap-6">
           {navLinks.map((link) => (
             <Link
@@ -48,7 +47,6 @@ export function Navbar() {
             <Button size="sm">Get Started</Button>
           </div>
           
-          {/* Mobile Menu Button */}
           <button
             className="flex h-9 w-9 items-center justify-center rounded-md border md:hidden"
             onClick={toggleMenu}
@@ -59,7 +57,6 @@ export function Navbar() {
         </div>
       </div>
 
-      {/* Mobile Navigation Overlay */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
