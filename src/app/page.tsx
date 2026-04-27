@@ -176,10 +176,10 @@ export default function LandingPage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
             >
-              <h1 className="mb-6 text-5xl font-extrabold tracking-tight md:text-7xl">
+              <h1 className="mb-6 text-4xl font-extrabold tracking-tight xs:text-5xl sm:text-6xl md:text-7xl">
                 AI Website <span className="bg-gradient-to-r from-purple-600 to-blue-500 bg-clip-text text-transparent">Analyzer</span>
               </h1>
-              <p className="mx-auto mb-10 max-w-2xl text-lg text-muted-foreground md:text-xl">
+              <p className="mx-auto mb-10 max-w-2xl text-base text-muted-foreground sm:text-lg md:text-xl px-2">
                 Analyze any website's security, performance, and design system instantly with our powerful AI-driven engine.
               </p>
             </motion.div>
@@ -201,7 +201,7 @@ export default function LandingPage() {
                     value={url}
                     onChange={(e) => setUrl(e.target.value)}
                     className={cn(
-                      "h-14 pl-10 pr-32 text-lg shadow-xl transition-all",
+                      "h-14 pl-10 pr-10 sm:pr-32 text-base sm:text-lg shadow-xl transition-all",
                       checkStatus === "exists" && "border-emerald-500/50 focus-visible:border-emerald-500 focus-visible:ring-emerald-500/20",
                       checkStatus === "not-exists" && "border-rose-500/50 focus-visible:border-rose-500 focus-visible:ring-rose-500/20"
                     )}
@@ -215,7 +215,7 @@ export default function LandingPage() {
                     >
                       {getStatusIcon()}
                       <span className={cn(
-                        "text-xs font-medium",
+                        "hidden sm:inline text-xs font-medium",
                         checkStatus === "checking" && "text-purple-500",
                         checkStatus === "exists" && "text-emerald-500",
                         checkStatus === "not-exists" && "text-rose-500"
@@ -260,8 +260,8 @@ export default function LandingPage() {
               animate={{ opacity: 1, scale: 1 }}
               className="mb-12 flex flex-col items-center justify-between gap-6 rounded-3xl bg-primary/5 p-8 md:flex-row"
             >
-              <div className="flex items-center gap-6">
-                <div className="relative flex h-24 w-24 items-center justify-center">
+              <div className="flex flex-col items-center gap-6 sm:flex-row">
+                <div className="relative flex h-20 w-20 items-center justify-center sm:h-24 sm:w-24">
                   <svg className="h-full w-full" viewBox="0 0 100 100">
                     <circle className="stroke-muted fill-none" strokeWidth="8" cx="50" cy="50" r="40" />
                     <motion.circle
@@ -276,18 +276,18 @@ export default function LandingPage() {
                       transition={{ duration: 1.5, ease: "easeOut" }}
                     />
                   </svg>
-                  <span className="absolute text-2xl font-black">{analysisResult.performance.score}</span>
+                  <span className="absolute text-xl font-black sm:text-2xl">{analysisResult.performance.score}</span>
                 </div>
-                <div>
-                  <h2 className="text-3xl font-bold">Overall Health</h2>
-                  <p className="text-muted-foreground">Comprehensive audit for {analysisResult.url}</p>
+                <div className="text-center sm:text-left">
+                  <h2 className="text-2xl font-bold sm:text-3xl">Overall Health</h2>
+                  <p className="text-sm text-muted-foreground sm:text-base">Comprehensive audit for {analysisResult.url}</p>
                 </div>
               </div>
-              <div className="flex gap-4">
-                <Button variant="outline" onClick={() => window.print()} className="gap-2 rounded-xl">
+              <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:gap-4">
+                <Button variant="outline" onClick={() => window.print()} className="w-full gap-2 rounded-xl sm:w-auto">
                   <Share2 className="h-4 w-4" /> Export Report
                 </Button>
-                <Button className="gap-2 rounded-xl">
+                <Button className="w-full gap-2 rounded-xl sm:w-auto">
                   <Zap className="h-4 w-4" /> Rescan Now
                 </Button>
               </div>
@@ -388,14 +388,14 @@ export default function LandingPage() {
                     <span className="text-xs font-bold">{analysisResult.accessibility.score}%</span>
                   </div>
                   <Progress value={analysisResult.accessibility.score} className="h-2" />
-                  <div className="grid grid-cols-2 gap-4 mt-6">
-                    <div className="rounded-xl bg-muted/50 p-3 text-center">
-                      <div className="text-xl font-bold">{analysisResult.accessibility.totalImages}</div>
-                      <div className="text-[10px] text-muted-foreground uppercase">Total Imgs</div>
+                  <div className="grid grid-cols-2 gap-3 mt-6 sm:gap-4">
+                    <div className="rounded-xl bg-muted/50 p-3 text-center transition-colors hover:bg-muted/80">
+                      <div className="text-lg font-bold sm:text-xl">{analysisResult.accessibility.totalImages}</div>
+                      <div className="text-[9px] text-muted-foreground uppercase tracking-tight sm:text-[10px]">Total Imgs</div>
                     </div>
-                    <div className="rounded-xl bg-destructive/10 p-3 text-center">
-                      <div className="text-xl font-bold text-destructive">{analysisResult.accessibility.missingAlt}</div>
-                      <div className="text-[10px] text-muted-foreground uppercase">Missing Alt</div>
+                    <div className="rounded-xl bg-destructive/10 p-3 text-center transition-colors hover:bg-destructive/20">
+                      <div className="text-lg font-bold text-destructive sm:text-xl">{analysisResult.accessibility.missingAlt}</div>
+                      <div className="text-[9px] text-muted-foreground uppercase tracking-tight sm:text-[10px]">Missing Alt</div>
                     </div>
                   </div>
                 </div>
@@ -493,11 +493,11 @@ export default function LandingPage() {
         {/* Social Proof / Stats */}
         <section className="py-24">
           <div className="container mx-auto px-4 text-center">
-            <div className="flex flex-wrap justify-center gap-12 opacity-50 grayscale transition-all hover:grayscale-0">
-              <div className="flex items-center gap-2 text-2xl font-bold">Vercel</div>
-              <div className="flex items-center gap-2 text-2xl font-bold">Stripe</div>
-              <div className="flex items-center gap-2 text-2xl font-bold">OpenAI</div>
-              <div className="flex items-center gap-2 text-2xl font-bold">Linear</div>
+            <div className="flex flex-wrap justify-center gap-8 opacity-50 grayscale transition-all hover:grayscale-0 md:gap-12">
+              <div className="flex items-center gap-2 text-xl font-bold sm:text-2xl">Vercel</div>
+              <div className="flex items-center gap-2 text-xl font-bold sm:text-2xl">Stripe</div>
+              <div className="flex items-center gap-2 text-xl font-bold sm:text-2xl">OpenAI</div>
+              <div className="flex items-center gap-2 text-xl font-bold sm:text-2xl">Linear</div>
             </div>
           </div>
         </section>
